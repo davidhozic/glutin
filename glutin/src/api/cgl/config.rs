@@ -97,26 +97,27 @@ impl Display {
 
         let base_len = attrs.len();
 
-        // When `skip_cgl_profile` is set, skip profile selection entirely (None only).
+        // When `Api::OPENGL` isn't requested, skip profile selection entirely (None only).
         // Otherwise try each profile in order, falling back to no profile on failure.
-        let profiles: &[Option<(_, _)>] = if template.skip_cgl_profile {
-            &[None]
-        } else {
-            &[
-                Some((NSOpenGLPFAOpenGLProfile, NSOpenGLProfileVersion4_1Core)),
-                Some((NSOpenGLPFAOpenGLProfile, NSOpenGLProfileVersion3_2Core)),
-                Some((NSOpenGLPFAOpenGLProfile, NSOpenGLProfileVersionLegacy)),
-                None,
-            ]
-        };
+        let profiles: &[Option<NSOpenGLPixelFormatAttribute>] =
+            if template.api.is_some_and(|api| api.contains(Api::OPENGL)) {
+                &[
+                    Some(NSOpenGLProfileVersion4_1Core),
+                    Some(NSOpenGLProfileVersion3_2Core),
+                    Some(NSOpenGLProfileVersionLegacy),
+                    None,
+                ]
+            } else {
+                &[None]
+            };
 
         let raw = profiles
             .iter()
             .find_map(|profile| {
                 attrs.truncate(base_len);
-                if let Some((key, val)) = profile {
-                    attrs.push(*key);
-                    attrs.push(*val);
+                if let Some(profile) = profile {
+                    attrs.push(NSOpenGLPFAOpenGLProfile);
+                    attrs.push(*profile);
                 }
                 attrs.push(0); // null terminator
                 // initWithAttributes returns None if the attributes were invalid

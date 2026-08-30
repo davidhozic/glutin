@@ -175,6 +175,9 @@ impl ConfigTemplateBuilder {
     /// - **EGL:** [`Api::GLES2`] bit is set by default to avoid matching
     ///   [`Api::GLES1`] configs;
     /// - **GLX/WGL/CGL:** [`Api::OPENGL`] is always present in the result.
+    /// - **CGL:** requesting [`Api::OPENGL`] picks the latest supported
+    ///   `NSOpenGLProfile`; otherwise no profile is requested, which selects the
+    ///   legacy OpenGL together with the extensions it exposes.
     #[inline]
     pub fn with_api(mut self, api: Api) -> Self {
         self.template.api = Some(api);
@@ -263,19 +266,6 @@ impl ConfigTemplateBuilder {
         self
     }
 
-    /// Request that the `NSOpenGLProfile` selection is skipped on `CGL/macOS`.
-    /// This allows better compatibility with older openGL profiles
-    /// that rely on certain OpenGL extensions (from newer versions).
-    ///
-    /// # Api-specific
-    ///
-    /// Only supported with `CGL` (`macOS`)
-    #[inline]
-    pub fn skip_cgl_profile(mut self, skip: bool) -> Self {
-        self.template.skip_cgl_profile = skip;
-        self
-    }
-
     /// Build the template to match the configs against.
     #[must_use]
     pub fn build(self) -> ConfigTemplate {
@@ -336,10 +326,6 @@ pub struct ConfigTemplate {
 
     /// The native window config should support rendering into.
     pub(crate) native_window: Option<RawWindowHandle>,
-
-    /// Only has effect on `CGL/macOS`.
-    /// Skips`NSOpenGLProfile` attributes to the pixel format configuration.
-    pub(crate) skip_cgl_profile: bool,
 }
 
 impl Default for ConfigTemplate {
@@ -376,8 +362,6 @@ impl Default for ConfigTemplate {
             hardware_accelerated: None,
 
             api: None,
-
-            skip_cgl_profile: false,
         }
     }
 }
