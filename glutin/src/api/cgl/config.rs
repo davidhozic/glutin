@@ -43,8 +43,8 @@ impl Display {
         match template.color_buffer_type {
             ColorBufferType::Rgb { r_size, g_size, b_size } => {
                 attrs.push(NSOpenGLPFAColorSize);
-                // We can't specify particular color, so we provide the sum, and also requires
-                // an alpha.
+                // We can't specify particular color, so we provide the sum, and
+                // also requires an alpha.
                 attrs.push((r_size + g_size + b_size + template.alpha_size) as u32);
             },
             _ => {
@@ -97,8 +97,9 @@ impl Display {
 
         let base_len = attrs.len();
 
-        // When `Api::OPENGL` isn't requested, skip profile selection entirely (None only).
-        // Otherwise try each profile in order, falling back to no profile on failure.
+        // When `Api::OPENGL` isn't requested, skip profile selection entirely
+        // (None only). Otherwise try each profile in order, falling
+        // back to no profile on failure.
         let profiles: &[Option<NSOpenGLPixelFormatAttribute>] =
             if template.api.is_some_and(|api| api.contains(Api::OPENGL)) {
                 &[
@@ -120,7 +121,8 @@ impl Display {
                     attrs.push(*profile);
                 }
                 attrs.push(0); // null terminator
-                // initWithAttributes returns None if the attributes were invalid
+                // initWithAttributes returns None if the attributes were
+                // invalid
                 unsafe {
                     NSOpenGLPixelFormat::initWithAttributes(
                         <NSOpenGLPixelFormat as AllocAnyThread>::alloc(),
@@ -173,9 +175,9 @@ impl Config {
 #[allow(deprecated)]
 impl GlConfig for Config {
     fn color_buffer_type(&self) -> Option<ColorBufferType> {
-        // On macos all color formats divide by 3 without reminder, except for the RGB
-        // 565. So we can convert it in a hopefully reliable way. Also we should remove
-        // alpha.
+        // On macos all color formats divide by 3 without reminder, except for
+        // the RGB 565. So we can convert it in a hopefully reliable
+        // way. Also we should remove alpha.
         let color = self.raw_attribute(NSOpenGLPFAColorSize) - self.alpha_size() as i32;
         let r_size = (color / 3) as u8;
         let b_size = (color / 3) as u8;
